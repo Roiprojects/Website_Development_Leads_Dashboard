@@ -23,10 +23,10 @@ export function Layout() {
     };
     fetchSettings();
 
-    // Refresh title when location changes (in case it was updated in admin)
-    if (location.pathname === '/' || location.pathname === '/admin') {
-      fetchSettings();
-    }
+    // Poll for settings changes every 10 seconds for real-time sync
+    const interval = setInterval(fetchSettings, 10000);
+
+    return () => clearInterval(interval);
   }, [location.pathname]);
 
   // Close mobile menu on route change
