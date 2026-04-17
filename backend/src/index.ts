@@ -22,9 +22,14 @@ app.use('/api/records', recordsRoutes);
 app.use('/api/enquiries', enquiriesRoutes);
 app.use('/api/settings', settingsRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Export for serverless (Vercel)
+export default app;
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
 
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION:', err);
@@ -35,4 +40,6 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Prevent process from exiting if event loop is empty (though app.listen should handle this)
-setInterval(() => {}, 1000000);
+if (require.main === module) {
+  setInterval(() => {}, 1000000);
+}

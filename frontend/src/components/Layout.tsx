@@ -60,7 +60,7 @@ export function Layout() {
           >
             Dashboard
           </Link>
-          {token ? (
+          {token && (
             <>
               <Link 
                 to="/admin" 
@@ -77,7 +77,6 @@ export function Layout() {
               </button>
             </>
           )}
-        </div>
         </div>
 
         {/* Mobile hamburger */}
@@ -99,7 +98,7 @@ export function Layout() {
             >
               Dashboard
             </Link>
-            {token ? (
+            {token && (
               <>
                 <Link 
                   to="/admin" 
@@ -114,9 +113,7 @@ export function Layout() {
                   <LogOut className="w-4 h-4" /> Logout
                 </button>
               </>
-              </>
-            ) : null}
-          </div>
+            )}
           </div>
         </div>
       )}
