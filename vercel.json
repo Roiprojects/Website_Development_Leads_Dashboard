@@ -1,3 +1,10 @@
 {
-  "outputDirectory": "dist"
+  "framework": "vite",
+  "github": {
+    "enabled": true
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.ts" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
