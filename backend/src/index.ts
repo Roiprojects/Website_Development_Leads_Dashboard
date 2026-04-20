@@ -6,7 +6,6 @@ import enquiriesRoutes from './routes/enquiries';
 import settingsRoutes from './routes/settings';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -24,17 +23,3 @@ app.use('/api/settings', settingsRoutes);
 
 // Export for serverless (Vercel)
 export default app;
-
-if (process.env.NODE_ENV !== 'production' && typeof require !== 'undefined' && require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-}
-
-process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION:', err);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('UNHANDLED REJECTION at:', promise, 'reason:', reason);
-});
