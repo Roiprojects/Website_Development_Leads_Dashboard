@@ -1,7 +1,12 @@
 {
-  "framework": "vite",
+  "builds": [
+    {
+      "src": "backend/src/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/api/(.*)", "destination": "/backend/src/index.ts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
