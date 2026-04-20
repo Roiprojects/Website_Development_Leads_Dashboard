@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start": "node --loader ts-node/esm backend/src/index.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "cd backend && npm run dev",

@@ -22,6 +22,18 @@ app.use('/api/records', recordsRoutes);
 app.use('/api/enquiries', enquiriesRoutes);
 app.use('/api/settings', settingsRoutes);
 
+// Server static frontend files
+import path from 'path';
+const distPath = path.resolve(process.cwd(), 'dist');
+app.use(express.static(distPath));
+
+// Fallback for SPA routing - send index.html for all other non-API routes
+app.get('*', (req, res) => {
+  if (!req.url.startsWith('/api')) {
+    res.sendFile(path.join(distPath, 'index.html'));
+  }
+});
+
 // Export for serverless (Vercel)
 export default app;
 
