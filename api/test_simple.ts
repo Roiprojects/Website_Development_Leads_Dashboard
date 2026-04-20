@@ -1,0 +1,1 @@
+const express = require('express'); const app = express(); app.get('/api/test_simple', (req, res) => res.json({msg: 'ok'})); module.exports = app;
