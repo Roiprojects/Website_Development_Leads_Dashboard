@@ -1,30 +1,27 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { db } from '../database';
+import { supabase } from '../database';
 
 const router = Router();
 export const JWT_SECRET = 'super-secret-dashboard-key';
 
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
-  db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, user: any) => {
-    if (err) {
-      return res.status(500).json({ error: 'Database error' });
-    }
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+  const { data: user, error } = await supabase.from('leads_dashboard_users').select('*').eq('username', username).single();
+  
+  if (error || !user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
 
-    const isMatch = bcrypt.compareSync(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+  const isMatch = bcrypt.compareSync(password, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
 
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
-    res.json({ token, user: { username: user.username } });
-  });
+  const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
+  res.json({ token, user: { username: user.username } });
 });
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
@@ -43,7 +40,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
-router.put('/reset-password', authenticate, (req: Request, res: Response) => {
+router.put('/reset-password', authenticate, async (req: Request, res: Response) => {
   const { currentPassword, newPassword } = req.body;
   const userId = (req as any).user.id;
 
@@ -51,52 +48,46 @@ router.put('/reset-password', authenticate, (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Current password and new password are required' }) as any;
   }
 
-  db.get(`SELECT * FROM users WHERE id = ?`, [userId], (err, user: any) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+  const { data: user, error } = await supabase.from('leads_dashboard_users').select('*').eq('id', userId).single();
+  if (error || !user) return res.status(404).json({ error: 'User not found' });
 
-    const isMatch = bcrypt.compareSync(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Incorrect current password' });
-    }
+  const isMatch = bcrypt.compareSync(currentPassword, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ error: 'Incorrect current password' });
+  }
 
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(newPassword, salt);
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(newPassword, salt);
 
-    db.run(`UPDATE users SET password = ? WHERE id = ?`, [hash, userId], function(err) {
-      if (err) return res.status(500).json({ error: 'Failed to update password' });
-      res.json({ message: 'Password updated successfully' });
-    });
-  });
+  const { error: updateError } = await supabase.from('leads_dashboard_users').update({ password: hash }).eq('id', userId);
+  if (updateError) return res.status(500).json({ error: 'Failed to update password' });
+  res.json({ message: 'Password updated successfully' });
 });
 
-router.post('/recover-password', (req: Request, res: Response) => {
-  const { username, recoveryKey, newPassword } = req.body; // recoveryKey will now be the PIN
+router.post('/recover-password', async (req: Request, res: Response) => {
+  const { username, recoveryKey, newPassword } = req.body; 
 
   if (!username || !recoveryKey || !newPassword) {
     return res.status(400).json({ error: 'Username, recovery PIN, and new password are required' }) as any;
   }
 
-  db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, user: any) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+  const { data: user, error } = await supabase.from('leads_dashboard_users').select('*').eq('username', username).single();
+  if (error || !user) return res.status(404).json({ error: 'User not found' });
 
-    if (recoveryKey !== user.recovery_pin) {
-      return res.status(401).json({ error: 'Invalid recovery PIN' });
-    }
+  if (recoveryKey !== user.recovery_pin) {
+    return res.status(401).json({ error: 'Invalid recovery PIN' });
+  }
 
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(newPassword, salt);
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(newPassword, salt);
 
-    db.run(`UPDATE users SET password = ? WHERE id = ?`, [hash, user.id], function(err) {
-      if (err) return res.status(500).json({ error: 'Failed to update password' });
-      res.json({ message: 'Password recovered successfully' });
-    });
-  });
+  const { error: updateError } = await supabase.from('leads_dashboard_users').update({ password: hash }).eq('id', user.id);
+  if (updateError) return res.status(500).json({ error: 'Failed to update password' });
+  res.json({ message: 'Password recovered successfully' });
 });
 
 // Update Recovery PIN (Protected)
-router.put('/update-pin', authenticate, (req: Request, res: Response) => {
+router.put('/update-pin', authenticate, async (req: Request, res: Response) => {
   const { newPin } = req.body;
   const userId = (req as any).user.id;
 
@@ -104,10 +95,9 @@ router.put('/update-pin', authenticate, (req: Request, res: Response) => {
     return res.status(400).json({ error: 'New PIN is required' });
   }
 
-  db.run(`UPDATE users SET recovery_pin = ? WHERE id = ?`, [newPin, userId], function(err) {
-    if (err) return res.status(500).json({ error: 'Failed to update recovery PIN' });
-    res.json({ message: 'Recovery PIN updated successfully' });
-  });
+  const { error } = await supabase.from('leads_dashboard_users').update({ recovery_pin: newPin }).eq('id', userId);
+  if (error) return res.status(500).json({ error: 'Failed to update recovery PIN' });
+  res.json({ message: 'Recovery PIN updated successfully' });
 });
 
 export default router;
