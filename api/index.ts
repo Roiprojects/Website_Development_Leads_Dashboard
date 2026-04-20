@@ -1,5 +1,9 @@
-import app from '../backend/src/index.js';
+import app from '../backend/src/index';
 
 export default function(req: any, res: any) {
-  return app(req, res);
+  try {
+    return app(req, res);
+  } catch (err: any) {
+    return res.status(200).json({ status: 'caught error', message: err.message, stack: err.stack });
+  }
 }
