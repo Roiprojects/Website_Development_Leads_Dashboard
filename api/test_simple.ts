@@ -1,1 +1,3 @@
-const express = require('express'); const app = express(); app.get('/api/test_simple', (req, res) => res.json({msg: 'ok'})); module.exports = app;
+export default function handler(req, res) {
+  res.status(200).json({ message: 'Vercel Serverless Function is working natively!' });
+}
