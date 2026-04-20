@@ -48,7 +48,7 @@ export function Dashboard() {
           page, 
           limit: 20, 
           search,
-          sort: 'random'
+          sort: isRandom ? 'random' : 'desc'
         }
       });
       const records = res.data.records;
