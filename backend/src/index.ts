@@ -24,13 +24,20 @@ app.use('/api/settings', settingsRoutes);
 
 // Server static frontend files
 import path from 'path';
-const distPath = path.resolve(process.cwd(), 'dist');
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.resolve(__dirname, '../../dist');
+
 app.use(express.static(distPath));
 
 // Fallback for SPA routing - send index.html for all other non-API routes
-app.get('*', (req, res) => {
-  if (!req.url.startsWith('/api')) {
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api')) {
     res.sendFile(path.join(distPath, 'index.html'));
+  } else {
+    next();
   }
 });
 
