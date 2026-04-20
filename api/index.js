@@ -1,0 +1,1 @@
+module.exports = function(req, res) { try { const backendApp = require('../backend/src/index').default || require('../backend/src/index'); return backendApp(req, res); } catch(error) { res.status(200).json({ error_message: error.message, error_stack: error.stack, error_name: error.name }); } };
