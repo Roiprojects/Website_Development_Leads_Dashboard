@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { query, run } from '../database';
+import { supabase } from '../database';
 import { authenticate } from './auth';
 
 const router = Router();
@@ -7,11 +7,15 @@ const router = Router();
 // GET /api/settings - Get all settings
 router.get('/', async (req, res) => {
   try {
-    const rows = await query('SELECT key, value FROM settings');
+    const { data: rows, error } = await supabase.from('leads_dashboard_settings').select('key, value');
+    if (error) throw error;
+    
     const settings: Record<string, string> = {};
-    rows.forEach(row => {
-      settings[row.key] = row.value;
-    });
+    if (rows) {
+      rows.forEach((row: any) => {
+        settings[row.key] = row.value;
+      });
+    }
     res.json(settings);
   } catch (err) {
     console.error(err);
@@ -23,11 +27,15 @@ router.get('/', async (req, res) => {
 router.put('/', authenticate, async (req, res) => {
   try {
     const { project_title, total_enquiries_override } = req.body;
+    
+    // Supabase upsert requires primary key conflict handling.
     if (project_title !== undefined) {
-      await run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', ['project_title', project_title]);
+      const { error } = await supabase.from('leads_dashboard_settings').upsert({ key: 'project_title', value: project_title });
+      if (error) throw error;
     }
     if (total_enquiries_override !== undefined) {
-      await run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', ['total_enquiries_override', total_enquiries_override.toString()]);
+       const { error } = await supabase.from('leads_dashboard_settings').upsert({ key: 'total_enquiries_override', value: total_enquiries_override.toString() });
+       if (error) throw error;
     }
     res.json({ message: 'Settings updated successfully' });
   } catch (err) {

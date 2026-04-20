@@ -25,7 +25,7 @@ app.use('/api/settings', settingsRoutes);
 // Export for serverless (Vercel)
 export default app;
 
-if (require.main === module) {
+if (process.env.NODE_ENV !== 'production' && typeof require !== 'undefined' && require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
@@ -38,8 +38,3 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('UNHANDLED REJECTION at:', promise, 'reason:', reason);
 });
-
-// Prevent process from exiting if event loop is empty (though app.listen should handle this)
-if (require.main === module) {
-  setInterval(() => {}, 1000000);
-}
