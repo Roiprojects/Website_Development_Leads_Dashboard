@@ -23,7 +23,7 @@ app.use('/api/enquiries', enquiriesRoutes);
 app.use('/api/settings', settingsRoutes);
 
 // Export for serverless (Vercel)
-export default app;
+module.exports = app;
 
 if (process.env.NODE_ENV !== 'production' && typeof require !== 'undefined' && require.main === module) {
   app.listen(PORT, () => {
