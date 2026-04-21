@@ -1,4 +1,5 @@
 node_modules/
+dist/
 .env
 # database.sqlite (Removed from ignore to track in Git)
 # database.sqlite
