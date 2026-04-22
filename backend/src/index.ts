@@ -6,6 +6,8 @@ import enquiriesRoutes from './routes/enquiries';
 import settingsRoutes from './routes/settings';
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+
 
 app.use(cors());
 app.use(express.json());
@@ -23,3 +25,12 @@ app.use('/api/settings', settingsRoutes);
 
 // Export for serverless (Vercel)
 export default app;
+
+// Local development listener
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`[LOCAL] Server is running on port ${PORT}`);
+    console.log(`[DB] Connected to Supabase cloud database.`);
+  });
+}
+
