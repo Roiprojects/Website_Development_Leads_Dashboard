@@ -7,13 +7,19 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export default async function handler(req: any, res: any) {
     try {
         if (req.url.includes('/api/records')) {
-            const { data, error } = await supabase
+            const { data, error, count } = await supabase
                 .from('leads_dashboard_records')
-                .select('*')
+                .select('*', { count: 'exact' })
                 .order('date', { ascending: false });
 
             if (error) throw error;
-            return res.status(200).json(data);
+            
+            // Return in the format expected by the frontend
+            return res.status(200).json({
+                records: data || [],
+                total: count || 0,
+                totalPages: Math.ceil((count || 0) / 20)
+            });
         }
 
         if (req.url.includes('/api/settings')) {
@@ -23,12 +29,36 @@ export default async function handler(req: any, res: any) {
 
             if (error) throw error;
             const settings: any = {};
-            data.forEach((s: any) => settings[s.key] = s.value);
+            data?.forEach((s: any) => settings[s.key] = s.value);
             return res.status(200).json(settings);
         }
 
-        return res.status(200).json({ status: 'API Online', message: 'Endpoint matched but route not specific' });
+        if (req.url.includes('/api/enquiries/latest')) {
+             const { data, error } = await supabase
+                .from('leads_dashboard_enquiries')
+                .select('*')
+                .order('date', { ascending: false })
+                .limit(1)
+                .single();
+            
+            if (error && error.code !== 'PGRST116') throw error;
+            return res.status(200).json(data || { value: 0, date: new Date().toISOString() });
+        }
+
+        if (req.url.includes('/api/enquiries')) {
+            const { data, error } = await supabase
+                .from('leads_dashboard_enquiries')
+                .select('*')
+                .order('year', { ascending: false })
+                .order('month', { ascending: false });
+
+            if (error) throw error;
+            return res.status(200).json(data || []);
+        }
+
+        return res.status(200).json({ status: 'API Online' });
     } catch (err: any) {
-        return res.status(200).json({ error: 'Serverless Runtime Error', message: err.message });
+        console.error('API Error:', err);
+        return res.status(500).json({ error: 'Serverless Runtime Error', message: err.message });
     }
 }

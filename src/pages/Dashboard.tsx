@@ -163,7 +163,7 @@ export function Dashboard() {
               </tr>
             </thead>
             <tbody className={`divide-y divide-slate-200 dark:divide-dark-border transition-opacity duration-300 ${isShuffling ? 'opacity-40' : 'opacity-100'}`}>
-              {data.map((record) => (
+              {(data || []).map((record) => (
                 <tr key={record.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                   <td className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                     <div className="flex items-center gap-2 sm:gap-3">
